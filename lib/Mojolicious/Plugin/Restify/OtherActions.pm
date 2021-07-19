@@ -2,6 +2,28 @@ use strict;
 use warnings;
 package Mojolicious::Plugin::Restify::OtherActions;
 
+use Mojo::Base 'Mojolicious::Plugin::Restify';
+
+sub register() {
+    my $s = shift;
+    my ($app, $conf) = @_;
+    $s->SUPER::register(@_);
+    my $original_code = $app->routes->shortcuts->{collection};
+    $app->routes->add_shortcut(
+        # replace original shortcut
+        collection => sub {
+            my $coll    = $original_code->(@_);
+            my $r       = shift;
+            my $path    = shift;
+            my $options = ref $_[0] eq 'HASH' ? shift : {@_};
+            my $or      = $r->find("$options->{route_name}");
+            $or->get("list/:query/*opt")->to(action => 'list',
+                opt => undef)->name($options->{route_name} . "_otheractions");
+            return $coll;
+
+        }
+    );
+}
 
 1;
 
