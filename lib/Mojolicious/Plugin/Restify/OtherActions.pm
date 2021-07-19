@@ -1,5 +1,3 @@
-use strict;
-use warnings;
 package Mojolicious::Plugin::Restify::OtherActions;
 
 use Mojo::Base 'Mojolicious::Plugin::Restify';
