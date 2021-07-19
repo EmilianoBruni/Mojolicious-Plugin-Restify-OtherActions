@@ -51,6 +51,34 @@ __END__
 
 =head1 DESCRIPTION
 
+Extends L<Mojolicious::Plugin::Restify> allowing to call other methods over REST collection
+
+=head1 USAGE
+
+When you create your controller (see L<Mojolicious::Plugin::Restify> documentation),
+you can use, as an example, this list method
+
+  sub list {
+    my $c		= shift;
+    my $query =  $c->stash('query');
+    return $c->$query if ($query);
+    ...your original list code ...
+  }
+
+to redirect your call to an alternative $query method.
+
+As an example, if your endpoint is C</accounts> then C</accounts/list/my_method/other/parameters>
+is redirect to C<< $c->my_method >> and remaining url is available in C<< $c->stash->('opt') >>.
+
+In addition to standard routes added by L<Mojolicious::Plugin::Restify>, a new route is added
+
+    # Pattern             Methods   Name                        Class::Method Name
+    # -------             -------   ----                        ------------------
+    # ....
+    # +/list/:query/*opt  GET       accounts_otheractions       Accounts::$query
+
+
+
 =head1 BUGS/CONTRIBUTING
 
 Please report any bugs through the web interface at L<https://github.com/EmilianoBruni/Mojolicious-Plugin-Restify-OtherActions/issues>
