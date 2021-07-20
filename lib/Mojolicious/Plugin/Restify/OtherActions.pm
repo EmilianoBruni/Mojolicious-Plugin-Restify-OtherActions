@@ -14,7 +14,17 @@ sub register() {
             my $r       = shift;
             my $path    = shift;
             my $options = ref $_[0] eq 'HASH' ? shift : {@_};
-            my $or      = $r->find("$options->{route_name}");
+            my $rname   = $options->{route_name};
+            my $or      = $r->find($rname);
+            if ($or->to_string =~ /:${rname}_id/) {
+                # M::P::Restify give same name to /accounts and /accounts/:accounts_id
+                # if I'm here my proposed patch
+                # https://github.com/kwakwaversal/mojolicious-plugin-restify/pull/19
+                # has not been still accepted, so I rename :accounts_id route
+                $or->name("${rname}_id");
+                # and find route again to match /accounts
+                $or      = $r->find("$options->{route_name}")
+            }
             $or->get("list/:query/*opt")->to(action => 'list',
                 opt => undef)->name($options->{route_name} . "_otheractions");
             return $coll;
@@ -63,7 +73,7 @@ you can use, as an example, this list method
     ...your original list code ...
   }
 
-to redirect your call to an alternative $query method.
+to redirect your call to an alternative C<$query> method.
 
 As an example, if your endpoint is C</accounts> then C</accounts/list/my_method/other/parameters>
 is redirect to C<< $c->my_method >> and remaining url is available in C<< $c->stash->('opt') >>.
@@ -73,9 +83,28 @@ In addition to standard routes added by L<Mojolicious::Plugin::Restify>, a new r
     # Pattern             Methods   Name                        Class::Method Name
     # -------             -------   ----                        ------------------
     # ....
-    # +/list/:query/*opt  GET       accounts_otheractions       Accounts::$query
+    # +/list/:query/*opt  GET       accounts_otheractions       Accounts::list
 
+=head1 Notes about Mojolicious::Plugin::Restify
 
+This module extends L<Mojolicious::Plugin::Restify> but solves also a little bug in route naming.
+
+In L<Mojolicious::Plugin::Restify> /accounts and /accounts/:accounts_id have the same name (accounts).
+
+This module replace the second route appending "_id" so that in original module where there is
+
+  # Pattern           Methods   Name                        Class::Method Name
+  # -------           -------   ----                        ------------------
+  # ...
+  #   +/:accounts_id  *         "accounts"
+
+here there is
+
+  #   +/:accounts_id  *         "accounts_id".
+
+There is a pull request in github repository for this little problem
+
+L<https://github.com/kwakwaversal/mojolicious-plugin-restify/pull/19>
 
 =head1 BUGS/CONTRIBUTING
 
